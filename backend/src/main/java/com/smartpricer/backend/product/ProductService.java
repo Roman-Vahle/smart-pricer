@@ -36,6 +36,16 @@ public class ProductService {
         return false;
     }
 
+    public Optional<Product> updateProduct(Long productId, Product updatedProduct) {
+            Optional<Product> optionalProduct = productRepository.findById(productId);
+            if (optionalProduct.isPresent()) {
+                Product product = optionalProduct.get();
+                product.setProductName(updatedProduct.getProductName());
+                product.setProductType(updatedProduct.getProductType());
+                return Optional.of(productRepository.save(product));
+            }
+        return Optional.empty();
+    }
 
 
 }
