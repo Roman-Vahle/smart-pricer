@@ -25,16 +25,9 @@ public class ProductStoreController {
     @PostMapping
     public ResponseEntity<ProductStoreDTO> createProductStore(@Valid @RequestBody CreateProductStoreRequest request) {
 
-        try {
             ProductStore createdProductStore = productStoreService.createProductStore(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ProductStoreDTO(createdProductStore));
-        }
-        catch (ResourceConflictException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        catch (ResourceNotFoundException e) {
-            return  ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+
     }
 
     @DeleteMapping("/{productStoreId}")
@@ -49,6 +42,7 @@ public class ProductStoreController {
 
     @GetMapping
     public List<ProductStoreDTO> getAllProductStores() {
+
         List<ProductStoreDTO> productStoreDTOs = new ArrayList<>();
         for (ProductStore productStore : productStoreService.getAllProductStores()) {
             ProductStoreDTO productStoreDTO = new ProductStoreDTO(productStore);
@@ -69,14 +63,14 @@ public class ProductStoreController {
     }
 
     @PutMapping("/{productStoreId}")
-    public ResponseEntity<ProductStore> updateProductStore(@PathVariable Long productStoreId, @RequestBody ProductStore updatedProductStore) {
+    public ResponseEntity<ProductStoreDTO> updateProductStore(@PathVariable Long productStoreId, @Valid @RequestBody UpdateProductStoreRequest request) {
 
-        Optional <ProductStore> productStore = productStoreService.updateProductStore(productStoreId, updatedProductStore);
-        if (productStore.isPresent()) {
-            return ResponseEntity.ok(productStore.get());
-        }
-        return ResponseEntity.notFound().build();
+        ProductStore productStore = productStoreService.updateProductStore(productStoreId, request);
+        return ResponseEntity.ok(new ProductStoreDTO(productStore));
+
     }
+
+
 
 
 }

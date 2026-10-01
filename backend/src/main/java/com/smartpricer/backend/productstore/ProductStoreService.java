@@ -57,16 +57,14 @@ public class ProductStoreService {
     }
 
 
-    public Optional<ProductStore> updateProductStore(Long productStoreId, ProductStore updatedProductStore) {
+    public ProductStore updateProductStore(Long productStoreId, UpdateProductStoreRequest request) {
         Optional<ProductStore> optionalProductStore = productStoreRepository.findById(productStoreId);
         if (optionalProductStore.isPresent()) {
             ProductStore productStore = optionalProductStore.get();
-            productStore.setPrice(updatedProductStore.getPrice());
-            productStore.setProduct(updatedProductStore.getProduct());
-            productStore.setStore(updatedProductStore.getStore());
-            return Optional.of(productStoreRepository.save(productStore));
+            productStore.setPrice(request.getPrice());
+            return productStoreRepository.save(productStore);
         }
-        return Optional.empty();
+        throw new ResourceNotFoundException("Product store does not exist.");
     }
 
     public boolean deleteProductStore(Long productStoreId) {
