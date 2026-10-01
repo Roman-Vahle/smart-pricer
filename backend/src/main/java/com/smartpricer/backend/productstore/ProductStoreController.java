@@ -1,7 +1,14 @@
 package com.smartpricer.backend.productstore;
+import com.smartpricer.backend.exception.ResourceConflictException;
+import com.smartpricer.backend.exception.ResourceNotFoundException;
+import com.smartpricer.backend.user.User;
+import com.smartpricer.backend.user.UserDTO;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 
@@ -16,9 +23,18 @@ public class ProductStoreController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProductStore createProductStore(@RequestBody ProductStore productStore) {
-        return productStoreService.createProductStore(productStore);
+    public ResponseEntity<ProductStoreDTO> createProductStore(@Valid @RequestBody CreateProductStoreRequest request) {
+
+        try {
+            ProductStore createdProductStore = productStoreService.createProductStore(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ProductStoreDTO(createdProductStore));
+        }
+        catch (ResourceConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        catch (ResourceNotFoundException e) {
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @DeleteMapping("/{productStoreId}")
@@ -32,17 +48,22 @@ public class ProductStoreController {
 
 
     @GetMapping
-    public List<ProductStore> getAllProductStores() {
-        return productStoreService.getAllProductStores();
+    public List<ProductStoreDTO> getAllProductStores() {
+        List<ProductStoreDTO> productStoreDTOs = new ArrayList<>();
+        for (ProductStore productStore : productStoreService.getAllProductStores()) {
+            ProductStoreDTO productStoreDTO = new ProductStoreDTO(productStore);
+            productStoreDTOs.add(productStoreDTO);
+        }
+        return productStoreDTOs;
     }
 
     @GetMapping ("/{productStoreId}")
-    public ResponseEntity<ProductStore> getProductStoreById(@PathVariable Long productStoreId) {
+    public ResponseEntity<ProductStoreDTO> getProductStoreById(@PathVariable Long productStoreId) {
 
         Optional <ProductStore> productStore = productStoreService.findById(productStoreId);
 
         if (productStore.isPresent()) {
-            return ResponseEntity.ok(productStore.get());
+            return ResponseEntity.ok(new ProductStoreDTO(productStore.get()));
         }
         return ResponseEntity.notFound().build();
     }

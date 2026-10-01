@@ -7,7 +7,12 @@ import java.math.BigDecimal;
 
 
 @Entity
-@Table(name = "productStores")
+@Table(
+        name = "product_stores",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"product_id", "store_id"})
+        }
+)
 public class ProductStore {
 
     @Id

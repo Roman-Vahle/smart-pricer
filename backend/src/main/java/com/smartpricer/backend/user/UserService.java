@@ -16,12 +16,13 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User createUser(User user){
-        if (userRepository.existsByUserEmail(user.getUserEmail())) {
+    public User createUser(CreateUserRequest request) {
+        if (userRepository.existsByUserEmail(request.getUserEmail())) {
             throw new IllegalArgumentException("Email already exist.");
         }
-        String hashedPassword = passwordEncoder.encode(user.getUserPassword());
-        user.setUserPassword(hashedPassword);
+        String hashedPassword = passwordEncoder.encode(request.getUserPassword());
+        User user = new User(request.getUserName(), request.getUserEmail(), hashedPassword);
+
         return userRepository.save(user);
     }
 
@@ -50,8 +51,8 @@ public class UserService {
 
             if (updatedUser.getUserEmail() != null) {
                 if (!user.getUserEmail().equals(updatedUser.getUserEmail())) {
-                    if (userRepository.existsByUserEmail(updatedUser.getUserEmail())) {
-                        throw new IllegalArgumentException("Email already exist.");
+                    if (userRepository.existsByUserEmailAndUserIdNot(updatedUser.getUserEmail(),userId)) {
+                        throw new IllegalArgumentException("Email already exists.");
                     }
                     user.setUserEmail(updatedUser.getUserEmail());
                 }
@@ -66,6 +67,17 @@ public class UserService {
             }
 
             return Optional.of(userRepository.save(user));
+        }
+        return Optional.empty();
+    }
+
+    public Optional<User> loginUser(LoginRequest request) {
+        Optional <User> optionalUser = userRepository.findByUserEmail(request.getUserEmail());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (passwordEncoder.matches(request.getUserPassword(), user.getUserPassword())) {
+                return Optional.of(user);
+            }
         }
         return Optional.empty();
     }

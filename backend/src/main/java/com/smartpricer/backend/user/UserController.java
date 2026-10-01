@@ -3,7 +3,7 @@ package com.smartpricer.backend.user;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
@@ -30,9 +30,9 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserRequest request) {
         try {
-            User createdUser = userService.createUser(user);
+            User createdUser = userService.createUser(request);
             UserDTO userDTO = new UserDTO(createdUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
         }
@@ -73,6 +73,15 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UserDTO> loginUser(@Valid @RequestBody LoginRequest loginRequest) {
+            Optional<User> user = userService.loginUser(loginRequest);
+            if (user.isPresent()) {
+                return ResponseEntity.ok(new UserDTO (user.get()));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
 }
