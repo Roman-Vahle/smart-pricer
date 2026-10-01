@@ -3,6 +3,8 @@ package com.smartpricer.backend.priceHistory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 
@@ -44,6 +46,18 @@ public class PriceHistoryController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping ("/product-store/{productStoreId}")
+    public List<PriceHistoryDTO>  getPriceHistoryForProductStore(@PathVariable Long productStoreId){
+
+        List<PriceHistoryDTO> priceHistoryDTOs = new ArrayList<>();
+
+        for (PriceHistory priceHistory : priceHistoryService.getPriceHistoriesForProductStore(productStoreId)){
+            PriceHistoryDTO priceHistoryDTO = new PriceHistoryDTO(priceHistory);
+            priceHistoryDTOs.add(priceHistoryDTO);
+        }
+        return priceHistoryDTOs;
     }
 
 }

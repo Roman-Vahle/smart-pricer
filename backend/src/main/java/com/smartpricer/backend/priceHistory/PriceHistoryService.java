@@ -33,4 +33,8 @@ public class PriceHistoryService {
         return false;
     }
 
+    public List<PriceHistory> getPriceHistoriesForProductStore(Long productStoreId) {
+        return priceHistoryRepository.findByProductStoreProductStoreIdOrderByRecordedAtAsc(productStoreId);
+    }
+
 }
