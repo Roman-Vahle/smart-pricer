@@ -1,5 +1,8 @@
 package com.smartpricer.backend.priceHistory;
 
+import com.smartpricer.backend.exception.ResourceConflictException;
+import com.smartpricer.backend.exception.ResourceNotFoundException;
+import com.smartpricer.backend.productstore.ProductStoreRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -8,9 +11,11 @@ import java.util.Optional;
 public class PriceHistoryService {
 
     private final PriceHistoryRepository priceHistoryRepository;
+    private final ProductStoreRepository productStoreRepository;
 
-    public PriceHistoryService(PriceHistoryRepository priceHistoryRepository) {
+    public PriceHistoryService(PriceHistoryRepository priceHistoryRepository, ProductStoreRepository productStoreRepository) {
         this.priceHistoryRepository = priceHistoryRepository;
+        this.productStoreRepository = productStoreRepository;
     }
 
     public PriceHistory createPriceHistory(PriceHistory priceHistory) {
@@ -21,12 +26,19 @@ public class PriceHistoryService {
         return priceHistoryRepository.findAll();
     }
 
-    public Optional<PriceHistory> getPriceHistoryById (Long priceHistoryId) {
-        return priceHistoryRepository.findById(priceHistoryId);
+    public PriceHistory getPriceHistoryById(Long priceHistoryId) {
+        Optional<PriceHistory> priceHistory = priceHistoryRepository.findById(priceHistoryId);
+
+        if (priceHistory.isPresent()) {
+            return priceHistory.get();
+        }
+
+        throw new ResourceNotFoundException("Price History Not Found");
+
     }
 
-    public boolean deletePriceHistory (Long priceHistoryId){
-        if (priceHistoryRepository.existsById(priceHistoryId)){
+    public boolean deletePriceHistory(Long priceHistoryId) {
+        if (priceHistoryRepository.existsById(priceHistoryId)) {
             priceHistoryRepository.deleteById(priceHistoryId);
             return true;
         }
@@ -34,7 +46,9 @@ public class PriceHistoryService {
     }
 
     public List<PriceHistory> getPriceHistoriesForProductStore(Long productStoreId) {
-        return priceHistoryRepository.findByProductStoreProductStoreIdOrderByRecordedAtAsc(productStoreId);
+        if (productStoreRepository.existsById(productStoreId)) {
+            return priceHistoryRepository.findByProductStoreProductStoreIdOrderByRecordedAtAsc(productStoreId);
+        }
+        throw new ResourceNotFoundException("Product store not found");
     }
-
 }
