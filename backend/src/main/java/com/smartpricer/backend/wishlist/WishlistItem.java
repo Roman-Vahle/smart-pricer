@@ -2,11 +2,9 @@ package com.smartpricer.backend.wishlist;
 
 import com.smartpricer.backend.product.Product;
 import jakarta.persistence.*;
+
 @Entity
-@Table (name = "wishlist_item",
-        uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"product_id", "wishlist_id"})
-        })
+@Table (name = "wishlist_item", uniqueConstraints = {@UniqueConstraint(columnNames = {"product_id", "wishlist_id"})})
 
 public class WishlistItem {
 

@@ -3,6 +3,9 @@ package com.smartpricer.backend.wishlist;
 import com.smartpricer.backend.user.User;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "wishlists")
 public class Wishlist {
@@ -17,6 +20,9 @@ public class Wishlist {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany (cascade = CascadeType.REMOVE, mappedBy = "wishlist")
+    private List<WishlistItem> wishlistItems = new ArrayList<>();
 
     public Wishlist(){}
 
@@ -46,4 +52,10 @@ public class Wishlist {
         this.user = user;
     }
 
+    public List<WishlistItem> getWishlistItems() {
+        return wishlistItems;
+    }
+    public void setWishlistItems(List<WishlistItem> wishlistItems) {
+        this.wishlistItems = wishlistItems;
+    }
 }
