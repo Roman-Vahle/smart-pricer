@@ -5,9 +5,6 @@ import com.smartpricer.backend.exception.ResourceNotFoundException;
 import com.smartpricer.backend.product.Product;
 import com.smartpricer.backend.product.ProductRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,13 +14,12 @@ public class WishlistItemService {
     private final WishlistItemRepository wishlistItemRepository;
     private final WishlistRepository wishlistRepository;
     private final ProductRepository productRepository;
-    private final WishlistService wishlistService;
 
-    public WishlistItemService(WishlistItemRepository wishlistItemRepository, WishlistRepository wishlistRepository, ProductRepository productRepository, WishlistService wishlistService) {
+
+    public WishlistItemService(WishlistItemRepository wishlistItemRepository, WishlistRepository wishlistRepository, ProductRepository productRepository) {
         this.wishlistItemRepository = wishlistItemRepository;
         this.wishlistRepository = wishlistRepository;
         this.productRepository = productRepository;
-        this.wishlistService = wishlistService;
     }
 
     public WishlistItem addWishlistItem(Long wishlistId, Long productId){
