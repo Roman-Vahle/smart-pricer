@@ -9,9 +9,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -109,6 +111,96 @@ public class WishlistItemServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId));
 
         verifyNoInteractions(wishlistItemRepository);
+
+    }
+
+    @Test
+    void deleteWishlistItem_whenItemExistsAndBelongsToWishlist_deletesWishlistItem() {
+
+        Wishlist wishlist = new Wishlist();
+        WishlistItem wishlistItem = new WishlistItem();
+
+        wishlist.setWishlistId(1L);
+        wishlistItem.setWishlistItemId(10L);
+
+        wishlistItem.setWishlist(wishlist);
+
+        when(wishlistItemRepository.findById(10L)).thenReturn(Optional.of(wishlistItem));
+
+        boolean result = wishlistItemService.deleteWishlistItem(1L, 10L);
+
+        assertTrue(result);
+
+        verify(wishlistItemRepository, times(1)).delete(wishlistItem);
+
+    }
+
+    @Test
+    void deleteWishlistItem_whenItemDoesNotExist_returnsFalse() {
+
+        Long wishlistId = 1L;
+        Long wishlistItemId = 10L;
+
+        when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.empty());
+
+        boolean result = wishlistItemService.deleteWishlistItem(wishlistId, wishlistItemId);
+
+        assertFalse(result);
+
+        verify(wishlistItemRepository, never()).delete(any(WishlistItem.class));
+
+    }
+
+    @Test
+    void deleteWishlistItem_whenItemBelongsToDifferentWishlist_returnsFalse() {
+
+        Long requestedWishlistId = 1L;
+        Long actualWishlistId = 2L;
+        Long wishlistItemId = 10L;
+
+        Wishlist wishlist = new Wishlist();
+        wishlist.setWishlistId(actualWishlistId);
+
+        WishlistItem wishlistItem = new WishlistItem();
+        wishlistItem.setWishlist(wishlist);
+
+        wishlistItem.setWishlistItemId(wishlistItemId);
+
+        when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(wishlistItem));
+
+        boolean result = wishlistItemService.deleteWishlistItem(requestedWishlistId, wishlistItemId);
+
+        assertFalse(result);
+
+        verify(wishlistItemRepository, times(1)).findById(wishlistItemId);
+
+        verify(wishlistItemRepository, never()).delete(any(WishlistItem.class));
+
+    }
+
+    @Test
+    void getAllWishlistItems_whenWishlistExists_returnsItems() {
+
+        Long wishlistId = 1L;
+
+        WishlistItem item1 = new WishlistItem();
+        WishlistItem item2 = new WishlistItem();
+
+        when(wishlistRepository.existsById(wishlistId)).thenReturn(true);
+
+        when(wishlistItemRepository.findAllByWishlistWishlistId(wishlistId)).thenReturn(List.of(item1, item2));
+
+        List<WishlistItem> result = wishlistItemService.getAllWishlistItems(wishlistId);
+
+        assertEquals(2, result.size());
+
+        assertTrue(result.contains(item1));
+
+        assertTrue(result.contains(item2));
+
+        verify(wishlistRepository, times(1)).existsById(wishlistId);
+
+        verify(wishlistItemRepository, times(1)).findAllByWishlistWishlistId(wishlistId);
 
     }
 
