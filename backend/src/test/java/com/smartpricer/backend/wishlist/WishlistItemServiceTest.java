@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -203,5 +204,19 @@ public class WishlistItemServiceTest {
         verify(wishlistItemRepository, times(1)).findAllByWishlistWishlistId(wishlistId);
 
     }
+
+    @Test
+    void getAllWishlistItems_whenWishlistDoesNotExist_throwsNotFound() {
+
+        Long wishlistId = 999L;
+
+        when(wishlistRepository.existsById(wishlistId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.getAllWishlistItems(wishlistId));
+
+        verifyNoInteractions(wishlistItemRepository);
+    }
+
+
 
 }

@@ -31,6 +31,9 @@ public class WishlistItem {
     public Long getWishlistItemId() {
         return wishlistItemId;
     }
+    public void setWishlistItemId(Long wishlistItemId) {
+        this.wishlistItemId = wishlistItemId;
+    }
 
     public Product getProduct() {
         return product;
@@ -45,5 +48,4 @@ public class WishlistItem {
     public void setWishlist(Wishlist wishlist) {
         this.wishlist = wishlist;
     }
-
 }
