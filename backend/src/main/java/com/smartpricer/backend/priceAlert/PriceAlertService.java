@@ -9,6 +9,7 @@ import com.smartpricer.backend.user.User;
 import com.smartpricer.backend.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +29,15 @@ public class PriceAlertService {
         this.productRepository = productRepository;
         this.productStoreRepository = productStoreRepository;
     }
-    @Transactional
-    public PriceAlert createPriceAlert(CreatePriceAlertRequest request) {
 
-        Optional<User> OptionalUser = userRepository.findById(request.getUserId());
+    @Transactional
+    public PriceAlert createPriceAlert(CreatePriceAlertRequest request, Long authenticatedId) {
+
+        Optional<User> OptionalUser = userRepository.findById(authenticatedId);
         Optional<Product> OptionalProduct = productRepository.findById(request.getProductId());
 
         if (OptionalUser.isEmpty()){
-            throw new ResourceNotFoundException("User id not found with id " + request.getUserId());
+            throw new ResourceNotFoundException("User id not found with id " + authenticatedId);
         }
 
         if (OptionalProduct.isEmpty()){
@@ -47,11 +49,10 @@ public class PriceAlertService {
 
         PriceAlert priceAlert = new PriceAlert(user, product, request.getTargetPrice(), LocalDateTime.now());
 
-        PriceAlert savedPriceAlert = priceAlertRepository.save(priceAlert);
-
-        return savedPriceAlert;
+        return priceAlertRepository.save(priceAlert);
 
     }
+
     @Transactional(readOnly = true)
     public List<PriceAlertDTO> getPriceAlertsForUser(Long userId) {
 
@@ -71,25 +72,40 @@ public class PriceAlertService {
        return priceAlertDTOList;
     }
 
-    public boolean deletePriceAlert(Long  priceAlertId) {
+    public boolean deletePriceAlert(Long  priceAlertId, Long authenticatedUserId) throws AccessDeniedException {
 
-        if (priceAlertRepository.existsById(priceAlertId)){
-            priceAlertRepository.deleteById(priceAlertId);
-            return true;
+        Optional<PriceAlert> OptionalpriceAlert = priceAlertRepository.findById(priceAlertId);
+
+        if (OptionalpriceAlert.isEmpty()){
+            return false;
         }
 
-        return false;
+        PriceAlert priceAlert = OptionalpriceAlert.get();
 
-        //update to handle Broken Object Level Authorization (only delete alert tied to this user NOT all)
+        if (!priceAlertRepository.existsById(priceAlertId)){
+            return false;
+        }
 
+        if (!priceAlert.getUser().getUserId().equals(authenticatedUserId)){
+            throw new AccessDeniedException("You do not own this price alert");
+        }
+
+        priceAlertRepository.deleteById(priceAlertId);
+
+        return true;
     }
 
     @Transactional(readOnly = true)
-    public List<MatchingStoreDTO> getMatchingStores(Long priceAlertId) {
+    public List<MatchingStoreDTO> getMatchingStores(Long priceAlertId, Long authenticatedUserId) throws AccessDeniedException {
 
         PriceAlert priceAlert = priceAlertRepository.findById(priceAlertId).orElseThrow(() ->
         new ResourceNotFoundException("Price alert not found with id " + priceAlertId));
 
+        Long userId = priceAlert.getUser().getUserId();
+
+        if (!userId.equals(authenticatedUserId)){
+            throw new AccessDeniedException("You do not own this price alert");
+        }
 
         List<MatchingStoreDTO> matchingStoreDTOS = new ArrayList<>();
 

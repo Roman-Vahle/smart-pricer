@@ -8,9 +8,6 @@ import java.math.BigDecimal;
 public class CreatePriceAlertRequest {
 
     @NotNull
-    private Long userId;
-
-    @NotNull
     private Long productId;
 
     @NotNull
@@ -19,17 +16,10 @@ public class CreatePriceAlertRequest {
 
     public CreatePriceAlertRequest() {}
 
-    public CreatePriceAlertRequest(Long userId, Long productId, BigDecimal targetPrice) {
-        this.userId = userId;
+    public CreatePriceAlertRequest(Long productId, BigDecimal targetPrice) {
+
         this.productId = productId;
         this.targetPrice = targetPrice;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public Long getProductId() {
