@@ -9,11 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Collections;
+import com.smartpricer.backend.user.User;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,8 +37,14 @@ public class WishlistItemServiceTest {
 
         Long wishlistId = 1L;
         Long productId = 2L;
+        Long authenticatedId = 13L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
 
         Wishlist wishlist = new Wishlist();
+        wishlist.setUser(user);
+
         Product product = new Product();
 
         when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
@@ -48,7 +53,7 @@ public class WishlistItemServiceTest {
 
         when(wishlistItemRepository.existsByWishlistWishlistIdAndProductProductId(wishlistId, productId)).thenReturn(true);
 
-        assertThrows(ResourceConflictException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId));
+        assertThrows(ResourceConflictException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId, authenticatedId));
 
         verify(wishlistItemRepository, never()).save(any(WishlistItem.class));
 
@@ -59,8 +64,14 @@ public class WishlistItemServiceTest {
 
         Long wishlistId = 1L;
         Long productId = 2L;
+        Long authenticatedId = 13L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
 
         Wishlist  wishlist = new Wishlist();
+        wishlist.setUser(user);
+
         Product product = new Product();
 
         when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
@@ -73,7 +84,7 @@ public class WishlistItemServiceTest {
 
         when(wishlistItemRepository.save(any(WishlistItem.class))).thenReturn(savedItem);
 
-        WishlistItem wishlistItem = wishlistItemService.addWishlistItem(wishlistId, productId);
+        WishlistItem wishlistItem = wishlistItemService.addWishlistItem(wishlistId, productId, authenticatedId);
 
         assertSame(savedItem, wishlistItem);
 
@@ -84,12 +95,13 @@ public class WishlistItemServiceTest {
     @Test
     void addWishlistItem_whenWishlistMissing_throwsNotFound() {
 
+        Long authenticatedId = 13L;
         Long wishlistId = 1L;
         Long productId = 2L;
 
         when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId));
+        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId, authenticatedId));
 
         verify(wishlistItemRepository, never()).save(any(WishlistItem.class));
 
@@ -102,14 +114,20 @@ public class WishlistItemServiceTest {
 
         Long wishlistId = 1L;
         Long productId = 2L;
+        Long authenticatedId = 13L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
 
         Wishlist  wishlist = new Wishlist();
+
+        wishlist.setUser(user);
 
         when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
 
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId));
+        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId, authenticatedId));
 
         verifyNoInteractions(wishlistItemRepository);
 
@@ -119,16 +137,25 @@ public class WishlistItemServiceTest {
     void deleteWishlistItem_whenItemExistsAndBelongsToWishlist_deletesWishlistItem() {
 
         Wishlist wishlist = new Wishlist();
+
         WishlistItem wishlistItem = new WishlistItem();
 
+        Long authenticatedId = 13L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
+
+        wishlist.setUser(user);
+
         wishlist.setWishlistId(1L);
+
         wishlistItem.setWishlistItemId(10L);
 
         wishlistItem.setWishlist(wishlist);
 
         when(wishlistItemRepository.findById(10L)).thenReturn(Optional.of(wishlistItem));
 
-        boolean result = wishlistItemService.deleteWishlistItem(1L, 10L);
+        boolean result = wishlistItemService.deleteWishlistItem(1L, 10L, authenticatedId);
 
         assertTrue(result);
 
@@ -141,10 +168,11 @@ public class WishlistItemServiceTest {
 
         Long wishlistId = 1L;
         Long wishlistItemId = 10L;
+        Long authenticatedId = 13L;
 
         when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.empty());
 
-        boolean result = wishlistItemService.deleteWishlistItem(wishlistId, wishlistItemId);
+        boolean result = wishlistItemService.deleteWishlistItem(wishlistId, wishlistItemId, authenticatedId);
 
         assertFalse(result);
 
@@ -158,6 +186,10 @@ public class WishlistItemServiceTest {
         Long requestedWishlistId = 1L;
         Long actualWishlistId = 2L;
         Long wishlistItemId = 10L;
+        Long authenticatedId = 13L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
 
         Wishlist wishlist = new Wishlist();
         wishlist.setWishlistId(actualWishlistId);
@@ -165,11 +197,13 @@ public class WishlistItemServiceTest {
         WishlistItem wishlistItem = new WishlistItem();
         wishlistItem.setWishlist(wishlist);
 
+        wishlist.setUser(user);
+
         wishlistItem.setWishlistItemId(wishlistItemId);
 
         when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(wishlistItem));
 
-        boolean result = wishlistItemService.deleteWishlistItem(requestedWishlistId, wishlistItemId);
+        boolean result = wishlistItemService.deleteWishlistItem(requestedWishlistId, wishlistItemId,  authenticatedId);
 
         assertFalse(result);
 
@@ -183,15 +217,22 @@ public class WishlistItemServiceTest {
     void getAllWishlistItems_whenWishlistExists_returnsItems() {
 
         Long wishlistId = 1L;
+        Long authenticatedId = 13L;
 
         WishlistItem item1 = new WishlistItem();
         WishlistItem item2 = new WishlistItem();
 
-        when(wishlistRepository.existsById(wishlistId)).thenReturn(true);
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(authenticatedId);
+
+        Wishlist wishlist = new Wishlist();
+        wishlist.setUser(user);
+
+        when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
 
         when(wishlistItemRepository.findAllByWishlistWishlistId(wishlistId)).thenReturn(List.of(item1, item2));
 
-        List<WishlistItem> result = wishlistItemService.getAllWishlistItems(wishlistId);
+        List<WishlistItem> result = wishlistItemService.getAllWishlistItems(wishlistId,  authenticatedId);
 
         assertEquals(2, result.size());
 
@@ -199,7 +240,7 @@ public class WishlistItemServiceTest {
 
         assertTrue(result.contains(item2));
 
-        verify(wishlistRepository, times(1)).existsById(wishlistId);
+        verify(wishlistRepository, times(1)).findById(wishlistId);
 
         verify(wishlistItemRepository, times(1)).findAllByWishlistWishlistId(wishlistId);
 
@@ -209,13 +250,89 @@ public class WishlistItemServiceTest {
     void getAllWishlistItems_whenWishlistDoesNotExist_throwsNotFound() {
 
         Long wishlistId = 999L;
+        Long authenticatedId = 13L;
 
-        when(wishlistRepository.existsById(wishlistId)).thenReturn(false);
+        when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.getAllWishlistItems(wishlistId));
+        assertThrows(ResourceNotFoundException.class, () -> wishlistItemService.getAllWishlistItems(wishlistId,  authenticatedId));
 
         verifyNoInteractions(wishlistItemRepository);
     }
+
+    @Test
+    void addWishlistItem_whenUserDoesNotOwnWishlist_throwsAccessDenied() {
+
+        Long wishlistId = 1L;
+        Long productId = 2L;
+        Long authenticatedId = 13L;
+        Long wishlistOwnerId = 14L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(wishlistOwnerId);
+
+        Wishlist wishlist = new Wishlist();
+        wishlist.setUser(user);
+
+        when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
+
+        assertThrows(AccessDeniedException.class, () -> wishlistItemService.addWishlistItem(wishlistId, productId, authenticatedId));
+
+        verifyNoInteractions(wishlistItemRepository);
+
+        verifyNoInteractions(productRepository);
+
+    }
+
+    @Test
+    void getAllWishlistItems_whenUserDoesNotOwnWishlist_throwsAccessDenied() {
+
+        Long wishlistId = 1L;
+        Long authenticatedId = 13L;
+        Long wishlistOwnerId = 14L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(wishlistOwnerId);
+
+        Wishlist wishlist = new Wishlist();
+        wishlist.setUser(user);
+
+        when(wishlistRepository.findById(wishlistId)).thenReturn(Optional.of(wishlist));
+
+        assertThrows(AccessDeniedException.class, () -> wishlistItemService.getAllWishlistItems(wishlistId, authenticatedId));
+
+        verifyNoInteractions(wishlistItemRepository);
+
+        }
+
+
+
+    @Test
+    void deleteWishlistItem_whenUserDoesNotOwnWishlist_throwsAccessDenied() {
+
+        Long wishlistId = 1L;
+        Long wishlistItemId = 10L;
+        Long authenticatedId = 13L;
+        Long wishlistOwnerId = 14L;
+
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(wishlistOwnerId);
+
+        Wishlist wishlist = new Wishlist();
+        wishlist.setUser(user);
+
+        WishlistItem wishlistItem = new WishlistItem();
+        wishlistItem.setWishlist(wishlist);
+
+        when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(wishlistItem));
+
+        assertThrows(AccessDeniedException.class, () -> wishlistItemService.deleteWishlistItem(wishlistId, wishlistItemId, authenticatedId));
+
+        verify(wishlistItemRepository, times(1)).findById(wishlistItemId);
+
+        verify(wishlistItemRepository, never()).delete(wishlistItem);
+
+    }
+
 
 
 

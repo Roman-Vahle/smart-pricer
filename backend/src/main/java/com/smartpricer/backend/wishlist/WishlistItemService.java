@@ -5,6 +5,8 @@ import com.smartpricer.backend.exception.ResourceNotFoundException;
 import com.smartpricer.backend.product.Product;
 import com.smartpricer.backend.product.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,12 +24,19 @@ public class WishlistItemService {
         this.productRepository = productRepository;
     }
 
-    public WishlistItem addWishlistItem(Long wishlistId, Long productId){
+    @Transactional
+    public WishlistItem addWishlistItem(Long wishlistId, Long productId, Long authenticatedId){
 
         Optional<Wishlist> wishlistOptional = wishlistRepository.findById(wishlistId);
 
         if (wishlistOptional.isEmpty()){
             throw new ResourceNotFoundException("Wishlist not found with id " + wishlistId);
+        }
+
+        Wishlist wishlist = wishlistOptional.get();
+
+        if (!wishlist.getUser().getUserId().equals(authenticatedId)){
+            throw new  AccessDeniedException("Access denied");
         }
 
         Optional<Product> productOptional = productRepository.findById(productId);
@@ -42,25 +51,32 @@ public class WishlistItemService {
 
         WishlistItem wishlistItem = new WishlistItem();
 
-        wishlistItem.setWishlist(wishlistOptional.get());
+        wishlistItem.setWishlist(wishlist);
 
         wishlistItem.setProduct(productOptional.get());
 
         return wishlistItemRepository.save(wishlistItem);
-
     }
 
-    public List <WishlistItem> getAllWishlistItems(Long wishlistId) {
+    @Transactional(readOnly = true)
+    public List <WishlistItem> getAllWishlistItems(Long wishlistId, Long authenticatedId) {
 
-        if (!wishlistRepository.existsById(wishlistId)){
+        Optional<Wishlist> wishlistOptional = wishlistRepository.findById(wishlistId);
+
+        if (wishlistOptional.isEmpty()){
             throw new ResourceNotFoundException("Wishlist not found with id " + wishlistId);
+        }
+
+        if(!wishlistOptional.get().getUser().getUserId().equals(authenticatedId)){
+            throw new  AccessDeniedException("Access denied");
         }
 
         return wishlistItemRepository.findAllByWishlistWishlistId(wishlistId);
 
     }
 
-    public boolean deleteWishlistItem(Long wishlistId, Long wishlistItemId){
+    @Transactional
+    public boolean deleteWishlistItem(Long wishlistId, Long wishlistItemId, Long  authenticatedId) {
 
         Optional<WishlistItem> optionalItem = wishlistItemRepository.findById(wishlistItemId);
 
@@ -70,7 +86,11 @@ public class WishlistItemService {
 
         WishlistItem wishlistItem = optionalItem.get();
 
-        if (!wishlistId.equals(wishlistItem.getWishlist().getWishlistId())){
+        if (!wishlistItem.getWishlist().getUser().getUserId().equals(authenticatedId)){
+            throw new  AccessDeniedException("Access denied");
+        }
+
+        if (!wishlistItem.getWishlist().getWishlistId().equals(wishlistId)){
             return false;
         }
 
